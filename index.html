@@ -40,21 +40,21 @@
         margin-top: 20px;
       }
 
-      .btns-form {
-        background-color: #ffffff;
-        color: #000000;
-        padding: 10px 18px;
-        border: 1px solid #000000;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 15px;
-        cursor: pointer;
-      }
+    .btns-form {
+      background-color: #ffffff;
+      color: #000000;
+      padding: 10px 18px;
+      border: 1px solid #000000;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+    }
 
-      .btns-form:hover {
-        background-color: #f2f2f2;
-        box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
-      } 
+    .btns-form:hover {
+      background-color: #f2f2f2;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    } 
   </style>
 </head>
 <body>
@@ -152,7 +152,7 @@
       const filtered = allUsers
         .filter(
           (user) =>
-            user.email.toLowerCase().includes(item) ||
+            user.email.toLowerCase().includes(userText) ||
             (user.name && user.name.toLowerCase().includes(userText))
         )
         .map((user) => ({ value: user.email, label: `${user.name} <${user.email}>` }));
