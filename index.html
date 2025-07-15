@@ -204,7 +204,12 @@
     loadingIndicator.style.display = 'inline';
     loadAllBtn.disabled = true;
     try {
-      const addAllUsers = allUsers.map(user => ({
+      //fetch data | we already have them from loadUsers() but this is for task requirements
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Network error');
+      const data = await res.json();
+
+      const addAllUsers = data.map(user => ({
         value: user.email,
         label: user.email
       }));
@@ -214,9 +219,10 @@
       });
     } catch (error) {
       alert('Failed to load customers: ' + error.message);
+    } finally {
+      loadingIndicator.style.display = 'none';
+      loadAllBtn.disabled = false;
     }
-    loadingIndicator.style.display = 'none';
-    loadAllBtn.disabled = false;
 });
 
 </script>
