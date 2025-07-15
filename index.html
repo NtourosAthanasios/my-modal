@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Email Modal Component</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <style>
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active { display: flex; } 
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 800px;
+    }
+    .form-group { margin-bottom: 15px; }
+
+    .form-group label { display: block; margin-bottom: 5px; }
+
+    .formElement {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  
+    .error { color: red; font-size: 0.9em; }
+
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .btns-form {
+        background-color: #ffffff;
+        color: #000000;
+        padding: 10px 18px;
+        border: 1px solid #000000;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      .btns-form:hover {
+        background-color: #f2f2f2;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+      } 
+  </style>
+</head>
+<body>
+  <button id="openBtn" class="btns-form">Open Modal</button>
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <form id="myForm">
+        <div class="form-group">
+          <label>Subject:</label>
+          <input type="text" id="subject" class="formElement" />
+          <div class="error" id="subjectError"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea id="description" class="formElement"></textarea>
+          <div class="error" id="descriptionError"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Destination Emails:</label>
+          <select id="emails" multiple class="formElement"></select>
+          <div class="error" id="emailsError"></div>
+        </div>
+
+        <div>
+          <button type="button" id="loadAllBtn" class="btns-form">Load All Users</button>
+          <span id="loadingIndicator" style="display:none;">Loading...</span>
+        </div>
+
+        <div class="buttons">
+          <button type="button" id="closeBtn" class="btns-form">Cancel</button>
+          <button type="submit" class="btns-form">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+  const modal = document.getElementById("modal");
+  const openBtn = document.getElementById("openBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const form = document.getElementById("myForm");
+  const loadAllBtn = document.getElementById('loadAllBtn');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+
+  //open and close modal
+  openBtn.onclick = () => modal.classList.add("active");
+  closeBtn.onclick = () => modal.classList.remove("active");
+  
+  
+  const emailSelect = document.getElementById("emails");
+  const choices = new Choices(emailSelect, {
+    removeItemButton: true,
+    placeholderValue: "Type to search emails...",
+  });
+
+  //sitogatos API URL
+  const API_URL = "https://686547495b5d8d0339808f5d.mockapi.io/spitogatos/api/customer-email-lookup";
+
+  let allUsers = [];
+
+  // load API data & store users
+  async function loadUsers() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error("fetch data error");
+      const data = await res.json();
+      allUsers = data;
+    } catch (e) {
+      console.error("API load error:", e);
+      allUsers = [];
+    }
+  }
+
+  loadUsers();
+
+  function debounce(func, timeout = 300) {
+    let timer;
+    return function (...args) {
+      const context = this;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        func.apply(context, args);
+      }, timeout);
+    };
+  }
+
+  //autocomplete email
+  emailSelect.addEventListener(
+    "search",
+    debounce((e) => {
+      const userText = e.detail.value.toLowerCase();
+      const filtered = allUsers
+        .filter(
+          (user) =>
+            user.email.toLowerCase().includes(item) ||
+            (user.name && user.name.toLowerCase().includes(userText))
+        )
+        .map((user) => ({ value: user.email, label: `${user.name} <${user.email}>` }));
+
+      choices.setChoices(filtered, "value", "label", true);
+    }, 300)
+  );
+
+  //submit form
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    let valid = true;
+    const subject = document.getElementById("subject").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const selectedEmails = choices.getValue(true);
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    document.getElementById("subjectError").textContent = "";
+    document.getElementById("descriptionError").textContent = "";
+    document.getElementById("emailsError").textContent = "";
+
+    if (!subject) {
+      document.getElementById("subjectError").textContent = "Subject is required.";
+      valid = false;
+    }
+    if (description.length < 10) {
+      document.getElementById("descriptionError").textContent = "Minimum 10 characters.";
+      valid = false;
+    }
+    if (
+      selectedEmails.length === 0 ||
+      !selectedEmails.every((e) => emailPattern.test(e))
+    ) {
+      document.getElementById("emailsError").textContent = "Enter valid email(s).";
+      valid = false;
+    }
+
+    if (valid) {
+      alert("Form submitted successfully!");
+      modal.classList.remove("active");
+      form.reset();
+      choices.removeActiveItems();
+    }
+  });
+
+
+  //load all users
+ loadAllBtn.addEventListener('click', async () => {
+    loadingIndicator.style.display = 'inline';
+    loadAllBtn.disabled = true;
+    try {
+      const addAllUsers = allUsers.map(user => ({
+        value: user.email,
+        label: user.email
+      }));
+      choices.setChoices(addAllUsers, 'value', 'label', true);
+      addAllUsers.forEach(item => {
+        choices.setChoiceByValue(item.value);
+      });
+    } catch (error) {
+      alert('Failed to load customers: ' + error.message);
+    }
+    loadingIndicator.style.display = 'none';
+    loadAllBtn.disabled = false;
+});
+
+</script>
+</body>
+</html>
