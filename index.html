@@ -149,6 +149,7 @@
     "search",
     debounce((e) => {
       const userText = e.detail.value.toLowerCase();
+      //filter users based on input
       const filtered = allUsers
         .filter(
           (user) =>
@@ -174,6 +175,7 @@
     document.getElementById("descriptionError").textContent = "";
     document.getElementById("emailsError").textContent = "";
 
+    // Validate inputs
     if (!subject) {
       document.getElementById("subjectError").textContent = "Subject is required.";
       valid = false;
@@ -209,6 +211,7 @@
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
 
+      //store users in choices
       const addAllUsers = data.map(user => ({
         value: user.email,
         label: user.email
